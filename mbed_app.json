@@ -1,0 +1,11 @@
+{
+    "target_overrides": {
+        "*": {		
+            "platform.stdio-baud-rate": 115200,
+            "platform.default-serial-baud-rate": 115200,
+            "target.console-uart" : false 
+        }
+    },
+    "requires": ["bare-metal", "se050"]
+}
+
