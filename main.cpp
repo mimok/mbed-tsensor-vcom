@@ -141,9 +141,8 @@ uint16_t process(apdu_ctx_t *ctx, packet_t *pin, packet_t *pout)
 
 int main(void)
 {
-	UARTSerial pc(USBTX, USBRX, 115200);
-	DigitalOut ledin(PB_6, 0);
-	DigitalOut ledout(PB_5, 0);
+	UARTSerial pc(MBED_CONF_TARGET_UART_TX, MBED_CONF_TARGET_UART_RX, 115200);
+	DigitalOut led(MBED_CONF_TARGET_LED, 0);
 	uint8_t buffer[BUFF_SZ];
 	apdu_ctx_t se050_ctx;
 
@@ -161,14 +160,14 @@ int main(void)
 	se050_powerOn();
 
 	while(1) {
-		ledin = 1;
+		led = 1;
 		receive(&pc, &pin);
-		ledin = 0;
+		led = 0;
 		pc.sync();
 		process(&se050_ctx, &pin, &pout);
-		ledout = 1;
+		led = 1;
 		send(&pc, &pout);
-		ledout = 0;
+		led = 0;
 		pc.sync();
 
 	}
