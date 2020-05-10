@@ -17,6 +17,7 @@
 
 #include "mbed.h"
 #include "se050.h"
+#include "USBSerial.h"
 
 typedef enum {
 	WAIT_FOR_CARD = 0x00,
@@ -32,7 +33,7 @@ typedef struct {
 
 #define BUFF_SZ 900
 
-uint16_t send(UARTSerial *pc, packet_t *p)
+static uint16_t send(FileHandle *pc, packet_t *p)
 {
 	uint8_t header[4];
 	header[0] = p->packetType;
@@ -44,14 +45,14 @@ uint16_t send(UARTSerial *pc, packet_t *p)
     return MBED_SUCCESS;
 }
 
-void readUntil(UARTSerial *pc, uint8_t *buf, size_t sz)
+static void readUntil(FileHandle *pc, uint8_t *buf, size_t sz)
 {
 	for(size_t i = 0; i<sz;) {
 		i += pc->read(&buf[i], sz-i);
 	}
 }
 
-uint16_t receive(UARTSerial *pc, packet_t *p)
+static uint16_t receive(FileHandle *pc, packet_t *p)
 {
 	uint8_t header[4];
 
@@ -75,7 +76,7 @@ uint16_t receive(UARTSerial *pc, packet_t *p)
 	return MBED_SUCCESS;
 }
 
-uint16_t process(apdu_ctx_t *ctx, packet_t *pin, packet_t *pout)
+static uint16_t process(apdu_ctx_t *ctx, packet_t *pin, packet_t *pout)
 {
 	switch(pin->packetType) {
 	case WAIT_FOR_CARD:
@@ -141,7 +142,12 @@ uint16_t process(apdu_ctx_t *ctx, packet_t *pin, packet_t *pout)
 
 int main(void)
 {
-	UARTSerial pc(MBED_CONF_TARGET_UART_TX, MBED_CONF_TARGET_UART_RX, 115200);
+#if TARGET_TSENSOR_DEV
+	UARTSerial pc(MBED_CONF_TARGET_STDIO_UART_TX, MBED_CONF_TARGET_STDIO_UART_RX, MBED_CONF_PLATFORM_STDIO_BAUD_RATE);
+#else
+	USBSerial pc;
+#endif
+	//
 	DigitalOut led(MBED_CONF_TARGET_LED, 0);
 	uint8_t buffer[BUFF_SZ];
 	apdu_ctx_t se050_ctx;
@@ -163,12 +169,12 @@ int main(void)
 		led = 1;
 		receive(&pc, &pin);
 		led = 0;
-		pc.sync();
 		process(&se050_ctx, &pin, &pout);
 		led = 1;
 		send(&pc, &pout);
 		led = 0;
-		pc.sync();
-
 	}
+
+	se050_powerOff();
+	return -1;
 }

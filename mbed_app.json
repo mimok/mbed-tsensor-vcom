@@ -3,9 +3,11 @@
         "*": {		
             "platform.stdio-baud-rate": 115200,
             "platform.default-serial-baud-rate": 115200,
-            "target.console-uart" : false 
+            "target.console-uart" : false, 
+            "target.usbserial-en" : 0,
+            "target.macros_remove": ["MBED_TICKLESS"]
         }
     },
-    "requires": ["bare-metal", "se050"]
+    "requires": ["bare-metal", "se050", "rtos", "rtos-api", "drivers-usb"]
 }
 
